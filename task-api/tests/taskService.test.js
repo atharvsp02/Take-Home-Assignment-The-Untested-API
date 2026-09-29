@@ -254,14 +254,42 @@ describe('update', () => {
     expect(updated).toEqual(task);
   });
 
-  // BUG #10: completeTask() sets completedAt, but moving a task to "done"
-  // through update() does not, leaving a finished task with no finish time.
-  test.failing('sets completedAt when the status changes to done', () => {
+  // Regression tests for BUG #10 (fixed): only completeTask() used to set
+  // completedAt, so finishing a task through update() left it null, and
+  // reopening a done task kept its old completedAt.
+  test('sets completedAt when the status changes to done', () => {
     const task = taskService.create({ title: 'Finish me' });
 
     const updated = taskService.update(task.id, { status: 'done' });
 
-    expect(updated.completedAt).not.toBeNull();
+    expect(new Date(updated.completedAt).toISOString()).toBe(updated.completedAt);
+  });
+
+  test('clears completedAt when a done task is moved back to another status', () => {
+    const task = taskService.create({ title: 'Reopen me' });
+    taskService.completeTask(task.id);
+
+    const updated = taskService.update(task.id, { status: 'in_progress' });
+
+    expect(updated.completedAt).toBeNull();
+  });
+
+  test('keeps the original completedAt when a done task is saved as done again', () => {
+    const task = taskService.create({ title: 'Already done' });
+    const { completedAt } = taskService.completeTask(task.id);
+
+    const updated = taskService.update(task.id, { status: 'done', title: 'Renamed' });
+
+    expect(updated.completedAt).toBe(completedAt);
+  });
+
+  test('leaves completedAt alone when the status is not changed', () => {
+    const task = taskService.create({ title: 'Done task' });
+    const { completedAt } = taskService.completeTask(task.id);
+
+    const updated = taskService.update(task.id, { priority: 'high' });
+
+    expect(updated.completedAt).toBe(completedAt);
   });
 });
 

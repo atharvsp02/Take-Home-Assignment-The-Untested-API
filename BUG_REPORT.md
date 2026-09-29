@@ -41,7 +41,7 @@ rejected is accepted.
 | 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | Open |
 | 8 | Invalid `page`/`limit` values are silently accepted | Low | `src/routes/tasks.js:20-21` | Open |
 | 9 | `description` is never validated; loose date formats accepted | Low | `src/utils/validators.js:14, 30` | Open |
-| 10 | Setting `status: done` through PUT leaves `completedAt` empty | Medium | `src/services/taskService.js:46-53` | Open |
+| 10 | Setting `status: done` through PUT leaves `completedAt` empty | Medium | `src/services/taskService.js:46-53` | ✅ Fixed |
 
 Paths in the table are relative to `task-api/`.
 
@@ -467,7 +467,7 @@ if (body.dueDate != null && (!ISO_DATE.test(body.dueDate) || isNaN(Date.parse(bo
 
 ## 10. Setting `status: done` through PUT leaves `completedAt` empty
 
-**Severity:** Medium · **Where:** `src/services/taskService.js:46-53`
+**Severity:** Medium · **Where:** `src/services/taskService.js:46-53` · **Status:** ✅ Fixed
 
 **Expected:** A task has a `completedAt` time if and only if its status is
 `done`, no matter which endpoint changed the status.
@@ -485,7 +485,11 @@ ways of finishing a task disagree.
 **How it was found:** `taskService.test.js` › update › *sets completedAt when
 the status changes to done*
 
-**Fix:** Keep `completedAt` in sync inside `update()`. This builds on the #5
+After the fix, extra tests cover reopening a done task (clears `completedAt`),
+saving a done task as done again (keeps the original time), and updates that
+don't touch `status` (leave `completedAt` alone).
+
+**Fix (applied):** Keep `completedAt` in sync inside `update()`. This builds on the #5
 fix, where `changes` holds only the editable fields:
 
 ```js
@@ -494,7 +498,7 @@ const updated = { ...current, ...changes };
 
 if (changes.status === 'done' && current.status !== 'done') {
   updated.completedAt = new Date().toISOString();
-} else if (changes.status && changes.status !== 'done') {
+} else if (changes.status !== undefined && changes.status !== 'done') {
   updated.completedAt = null;
 }
 ```

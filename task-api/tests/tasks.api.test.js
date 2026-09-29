@@ -301,6 +301,15 @@ describe('PUT /tasks/:id', () => {
     expect(res.body[0].title).toBe('New');
   });
 
+  // Regression test for BUG #10 (fixed): PUT to done used to leave completedAt null.
+  test('setting status to done records completedAt', async () => {
+    const { body: task } = await createTask({ title: 'x' });
+
+    const res = await api().put(`/tasks/${task.id}`).send({ status: 'done' });
+
+    expect(res.body).toMatchObject({ status: 'done', completedAt: expect.any(String) });
+  });
+
   test('can clear a due date by sending dueDate: null', async () => {
     const { body: task } = await createTask({ title: 'x', dueDate: FUTURE });
 

@@ -57,7 +57,16 @@ const update = (id, fields) => {
     if (fields[key] !== undefined) changes[key] = fields[key];
   });
 
-  const updated = { ...tasks[index], ...changes };
+  const current = tasks[index];
+  const updated = { ...current, ...changes };
+
+  // Keep completedAt in step with status, like completeTask() does (#10).
+  if (changes.status === 'done' && current.status !== 'done') {
+    updated.completedAt = new Date().toISOString();
+  } else if (changes.status !== undefined && changes.status !== 'done') {
+    updated.completedAt = null;
+  }
+
   tasks[index] = updated;
   return updated;
 };
