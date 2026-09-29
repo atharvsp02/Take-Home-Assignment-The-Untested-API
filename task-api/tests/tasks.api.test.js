@@ -188,6 +188,13 @@ describe('POST /tasks', () => {
     expect(res.body).toMatchObject(body);
   });
 
+  test('accepts dueDate: null, which means "no due date"', async () => {
+    const res = await createTask({ title: 'x', dueDate: null });
+
+    expect(res.status).toBe(201);
+    expect(res.body.dueDate).toBeNull();
+  });
+
   test('the new task is returned by GET /tasks', async () => {
     const created = await createTask({ title: 'Find me' });
 
@@ -225,15 +232,22 @@ describe('POST /tasks', () => {
     expect(res.status).toBe(400);
   });
 
-  // BUG #4: validators check `body.status && ...`, so null skips validation,
-  // and the `status = 'todo'` default only applies to undefined, not null.
-  test.failing('rejects status: null with 400', async () => {
+  // Regression tests for BUG #4 (fixed): validators checked `body.status && ...`,
+  // so null and "" skipped validation, and the `status = 'todo'` default only
+  // applies to undefined, not null. Both values were stored as-is.
+  test('rejects status: null with 400', async () => {
     const res = await createTask({ title: 'x', status: null });
 
     expect(res.status).toBe(400);
   });
 
-  test.failing('rejects priority: null with 400', async () => {
+  test('rejects an empty status with 400', async () => {
+    const res = await createTask({ title: 'x', status: '' });
+
+    expect(res.status).toBe(400);
+  });
+
+  test('rejects priority: null with 400', async () => {
     const res = await createTask({ title: 'x', priority: null });
 
     expect(res.status).toBe(400);
@@ -287,6 +301,15 @@ describe('PUT /tasks/:id', () => {
     expect(res.body[0].title).toBe('New');
   });
 
+  test('can clear a due date by sending dueDate: null', async () => {
+    const { body: task } = await createTask({ title: 'x', dueDate: FUTURE });
+
+    const res = await api().put(`/tasks/${task.id}`).send({ dueDate: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.dueDate).toBeNull();
+  });
+
   test('returns 404 for a task that does not exist', async () => {
     const res = await api().put('/tasks/does-not-exist').send({ title: 'New' });
 
@@ -319,8 +342,8 @@ describe('PUT /tasks/:id', () => {
     expect(res.body.id).toBe(task.id);
   });
 
-  // BUG #4: the same null loophole exists in validateUpdateTask.
-  test.failing('rejects status: null with 400', async () => {
+  // Regression test for BUG #4 (fixed): validateUpdateTask had the same null loophole.
+  test('rejects status: null with 400', async () => {
     const { body: task } = await createTask({ title: 'x' });
 
     const res = await api().put(`/tasks/${task.id}`).send({ status: null });

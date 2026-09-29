@@ -35,7 +35,7 @@ rejected is accepted.
 | 1 | Pagination skips the first page | High | `src/services/taskService.js:12` | ✅ Fixed |
 | 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | ✅ Fixed |
 | 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | ✅ Fixed |
-| 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | Open |
+| 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | ✅ Fixed |
 | 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | Open |
 | 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | Open |
 | 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | Open |
@@ -161,7 +161,7 @@ leftover from copy-pasting.
 ## 4. `null` status/priority skips validation and crashes the status filter
 
 **Severity:** High · **Where:** `src/utils/validators.js:8-14` (create) and
-`:24-30` (update), with the crash at `src/services/taskService.js:9`
+`:24-30` (update), with the crash at `src/services/taskService.js:9` · **Status:** ✅ Fixed
 
 **Expected:** `POST /tasks` with `"status": null` (or `""`) is rejected with
 `400`, like any other invalid status.
@@ -194,8 +194,8 @@ Later, `getByStatus()` calls `t.status.includes(...)` on that task, and
 calling a method on `null` throws a `TypeError`. Express catches it and
 the error handler returns 500.
 
-The same pattern lets `priority: null` and `dueDate: 0` through, and PUT has
-the same loophole (`validateUpdateTask`).
+The same pattern lets `priority: null` through, and PUT has the same
+loophole (`validateUpdateTask`).
 
 **How it was found:**
 - `tasks.api.test.js` › POST /tasks › *rejects status: null with 400*
@@ -203,7 +203,10 @@ the same loophole (`validateUpdateTask`).
 - `tasks.api.test.js` › POST /tasks › *a task sent with status: null does not break GET /tasks?status=*
 - `tasks.api.test.js` › PUT /tasks/:id › *rejects status: null with 400*
 
-**Fix:** Check whether the field was **sent** instead of whether it is truthy:
+After the fix, extra tests also check that `""` is rejected and that
+`dueDate: null` ("no due date") is still accepted on both POST and PUT.
+
+**Fix (applied):** Check whether the field was **sent** instead of whether it is truthy:
 
 ```js
 if (body.status !== undefined && !VALID_STATUSES.includes(body.status)) { ... }
@@ -435,8 +438,8 @@ date, which is what both the error message and the README promise.
 - `{"description": {"nested": true}}` or `{"description": 42}` is stored as-is.
 - `{"dueDate": "March 5"}` is accepted, and JavaScript reads it as
   **5 March 2001**. The task is overdue the moment it's created and inflates
-  the `overdue` count in `/tasks/stats`. `"1"` is also accepted (read as
-  1 Jan 2001).
+  the `overdue` count in `/tasks/stats`. `"1"` and the number `0` are also
+  accepted (read as 1 Jan 2001 and 1 Jan 2000).
 
 **Why it happens:** There is simply no rule for `description`. For dates,
 `Date.parse()` is lenient: it accepts many non-ISO formats and fills in
