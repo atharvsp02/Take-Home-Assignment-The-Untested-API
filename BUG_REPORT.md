@@ -37,7 +37,7 @@ rejected is accepted.
 | 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | ✅ Fixed |
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | ✅ Fixed |
 | 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | ✅ Fixed |
-| 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | Open |
+| 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | ✅ Fixed |
 | 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | Open |
 | 8 | Invalid `page`/`limit` values are silently accepted | Low | `src/routes/tasks.js:20-21` | Open |
 | 9 | `description` is never validated; loose date formats accepted | Low | `src/utils/validators.js:14, 30` | Open |
@@ -286,7 +286,7 @@ const update = (id, fields) => {
 
 ## 6. Status filter ignores `page` and `limit`
 
-**Severity:** Medium · **Where:** `src/routes/tasks.js:14-17`
+**Severity:** Medium · **Where:** `src/routes/tasks.js:14-17` · **Status:** ✅ Fixed
 
 **Expected:** `GET /tasks?status=done&page=1&limit=2` returns at most 2
 done tasks. The README's own example request combines them:
@@ -313,19 +313,25 @@ if (page !== undefined || limit !== undefined) { ... }
 **How it was found:** `tasks.api.test.js` › ?status= filter › *applies ?page
 and ?limit to the filtered results*
 
-**Fix:** Filter first, then paginate the filtered list:
+**Fix (applied):** Check pagination **before** the status filter, and let
+`getPaginated()` take an optional status so it filters first and then
+paginates the filtered list:
 
 ```js
-let result = status ? taskService.getByStatus(status) : taskService.getAll();
-
+// routes/tasks.js — pagination branch now comes first
 if (page !== undefined || limit !== undefined) {
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 10;
-  const offset = (pageNum - 1) * limitNum;
-  result = result.slice(offset, offset + limitNum);
+  return res.json(taskService.getPaginated(pageNum, limitNum, status));
 }
+if (status) { ... }
 
-res.json(result);
+// services/taskService.js
+const getPaginated = (page, limit, status) => {
+  const source = status ? getByStatus(status) : tasks;
+  const offset = (page - 1) * limit;
+  return source.slice(offset, offset + limit);
+};
 ```
 
 ---

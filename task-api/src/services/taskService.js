@@ -8,10 +8,12 @@ const findById = (id) => tasks.find((t) => t.id === id);
 
 const getByStatus = (status) => tasks.filter((t) => t.status === status);
 
-const getPaginated = (page, limit) => {
+// `status` is optional; when given, only tasks with that status are paginated.
+const getPaginated = (page, limit, status) => {
+  const source = status ? getByStatus(status) : tasks;
   // Pages are 1-based (the route defaults to page 1), so page 1 starts at 0.
   const offset = (page - 1) * limit;
-  return tasks.slice(offset, offset + limit);
+  return source.slice(offset, offset + limit);
 };
 
 const getStats = () => {

@@ -85,14 +85,22 @@ describe('GET /tasks', () => {
       expect(res.body).toHaveLength(3);
     });
 
-    // BUG #6: the route returns as soon as it sees ?status=, so ?page and
-    // ?limit are silently ignored when combined with a filter.
-    test.failing('applies ?page and ?limit to the filtered results', async () => {
+    // Regression tests for BUG #6 (fixed): the route used to return as soon as
+    // it saw ?status=, so ?page and ?limit were ignored alongside a filter.
+    test('applies ?page and ?limit to the filtered results', async () => {
       await createMany(3, { status: 'done' });
 
       const res = await api().get('/tasks?status=done&page=1&limit=2');
 
       expect(res.body).toHaveLength(2);
+    });
+
+    test('later pages continue through the filtered results', async () => {
+      await createMany(3, { status: 'done' });
+
+      const res = await api().get('/tasks?status=done&page=2&limit=2');
+
+      expect(res.body.map((t) => t.title)).toEqual(['Task 2', 'Task 3']);
     });
   });
 

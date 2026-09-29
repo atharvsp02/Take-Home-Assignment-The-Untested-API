@@ -164,6 +164,16 @@ describe('getPaginated', () => {
     expect(taskService.getPaginated(2, 10).map((t) => t.title)).toEqual(['Task 11', 'Task 12']);
   });
 
+  test('paginates only the tasks with the given status', () => {
+    createMany(3);
+    taskService.create({ title: 'Done 1', status: 'done' });
+    taskService.create({ title: 'Done 2', status: 'done' });
+    taskService.create({ title: 'Done 3', status: 'done' });
+
+    expect(taskService.getPaginated(1, 2, 'done').map((t) => t.title)).toEqual(['Done 1', 'Done 2']);
+    expect(taskService.getPaginated(2, 2, 'done').map((t) => t.title)).toEqual(['Done 3']);
+  });
+
   test('returns an empty array for a page past the end', () => {
     createMany(12);
 
