@@ -38,6 +38,7 @@ describe('create', () => {
       dueDate: null,
       completedAt: null,
       createdAt: expect.any(String),
+      assignee: null,
     });
     expect(new Date(task.createdAt).toISOString()).toBe(task.createdAt);
   });
@@ -300,6 +301,35 @@ describe('update', () => {
     const updated = taskService.update(task.id, { priority: 'high' });
 
     expect(updated.completedAt).toBe(completedAt);
+  });
+});
+
+describe('assignTask', () => {
+  test('sets the assignee and returns the updated task', () => {
+    const task = taskService.create({ title: 'Review PR' });
+
+    const assigned = taskService.assignTask(task.id, 'Asha');
+
+    expect(assigned).toEqual({ ...task, assignee: 'Asha' });
+  });
+
+  test('saves the assignee to the store', () => {
+    const task = taskService.create({ title: 'Review PR' });
+
+    taskService.assignTask(task.id, 'Asha');
+
+    expect(taskService.findById(task.id).assignee).toBe('Asha');
+  });
+
+  test('null removes the assignee', () => {
+    const task = taskService.create({ title: 'Review PR' });
+    taskService.assignTask(task.id, 'Asha');
+
+    expect(taskService.assignTask(task.id, null).assignee).toBeNull();
+  });
+
+  test('returns null for an unknown id', () => {
+    expect(taskService.assignTask('does-not-exist', 'Asha')).toBeNull();
   });
 });
 

@@ -41,13 +41,15 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
     dueDate,
     completedAt: null,
     createdAt: new Date().toISOString(),
+    assignee: null,
   };
   tasks.push(task);
   return task;
 };
 
 // Fields a client may change. id, createdAt and completedAt are managed by the
-// server, and anything else isn't part of the task shape (#5).
+// server, assignee is only set through assignTask() so its rules can't be
+// bypassed, and anything else isn't part of the task shape (#5).
 const EDITABLE_FIELDS = ['title', 'description', 'status', 'priority', 'dueDate'];
 
 const update = (id, fields) => {
@@ -69,6 +71,17 @@ const update = (id, fields) => {
     updated.completedAt = null;
   }
 
+  tasks[index] = updated;
+  return updated;
+};
+
+// Sets (or, with null, clears) the assignee. The rules for who may be
+// assigned live in the route; this just records the change.
+const assignTask = (id, assignee) => {
+  const index = tasks.findIndex((t) => t.id === id);
+  if (index === -1) return null;
+
+  const updated = { ...tasks[index], assignee };
   tasks[index] = updated;
   return updated;
 };
@@ -110,5 +123,6 @@ module.exports = {
   update,
   remove,
   completeTask,
+  assignTask,
   _reset,
 };

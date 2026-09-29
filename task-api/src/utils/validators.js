@@ -37,4 +37,23 @@ const validateUpdateTask = (body) => {
   return null;
 };
 
-module.exports = { validateCreateTask, validateUpdateTask };
+const MAX_ASSIGNEE_LENGTH = 100;
+
+// assignee is a person's name, or null to unassign the task.
+const validateAssignTask = (body) => {
+  if (body.assignee === undefined) {
+    return 'assignee is required (a name, or null to unassign)';
+  }
+  if (body.assignee === null) {
+    return null;
+  }
+  if (typeof body.assignee !== 'string' || body.assignee.trim() === '') {
+    return 'assignee must be a non-empty string, or null to unassign';
+  }
+  if (body.assignee.trim().length > MAX_ASSIGNEE_LENGTH) {
+    return `assignee must be at most ${MAX_ASSIGNEE_LENGTH} characters`;
+  }
+  return null;
+};
+
+module.exports = { validateCreateTask, validateUpdateTask, validateAssignTask };

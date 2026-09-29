@@ -178,6 +178,7 @@ describe('POST /tasks', () => {
       dueDate: null,
       completedAt: null,
       createdAt: expect.any(String),
+      assignee: null,
     });
   });
 
@@ -433,6 +434,131 @@ describe('PATCH /tasks/:id/complete', () => {
     const res = await api().patch(`/tasks/${task.id}/complete`);
 
     expect(res.body.priority).toBe('high');
+  });
+});
+
+describe('PATCH /tasks/:id/assign', () => {
+  const assign = (id, body) => api().patch(`/tasks/${id}/assign`).send(body);
+
+  test('assigns the task and returns the updated task', async () => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+
+    const res = await assign(task.id, { assignee: 'Asha' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ...task, assignee: 'Asha' });
+  });
+
+  test('the assignment is visible in GET /tasks', async () => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+
+    await assign(task.id, { assignee: 'Asha' });
+    const res = await api().get('/tasks');
+
+    expect(res.body[0].assignee).toBe('Asha');
+  });
+
+  test('trims spaces around the name', async () => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+
+    const res = await assign(task.id, { assignee: '  Asha  ' });
+
+    expect(res.body.assignee).toBe('Asha');
+  });
+
+  test('returns 404 for a task that does not exist', async () => {
+    const res = await assign('does-not-exist', { assignee: 'Asha' });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Task not found' });
+  });
+
+  test.each([
+    ['assignee is missing', {}],
+    ['assignee is an empty string', { assignee: '' }],
+    ['assignee is only spaces', { assignee: '   ' }],
+    ['assignee is a number', { assignee: 42 }],
+    ['assignee is an object', { assignee: { name: 'Asha' } }],
+    ['assignee is longer than 100 characters', { assignee: 'a'.repeat(101) }],
+  ])('returns 400 when %s', async (_, body) => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+
+    const res = await assign(task.id, body);
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: expect.any(String) });
+  });
+
+  describe('when the task is already assigned', () => {
+    let task;
+
+    beforeEach(async () => {
+      ({ body: task } = await createTask({ title: 'Review PR' }));
+      await assign(task.id, { assignee: 'Asha' });
+    });
+
+    test('assigning the same person again succeeds and changes nothing', async () => {
+      const res = await assign(task.id, { assignee: 'Asha' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee).toBe('Asha');
+    });
+
+    test('assigning someone else returns 409 and keeps the current assignee', async () => {
+      const res = await assign(task.id, { assignee: 'Ravi' });
+
+      expect(res.status).toBe(409);
+      expect(res.body).toEqual({ error: 'Task is already assigned to Asha' });
+      expect((await api().get('/tasks')).body[0].assignee).toBe('Asha');
+    });
+
+    test('assignee: null unassigns the task', async () => {
+      const res = await assign(task.id, { assignee: null });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee).toBeNull();
+    });
+
+    test('after unassigning, someone else can be assigned', async () => {
+      await assign(task.id, { assignee: null });
+
+      const res = await assign(task.id, { assignee: 'Ravi' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.assignee).toBe('Ravi');
+    });
+
+    test('completing the task keeps the assignee', async () => {
+      const res = await api().patch(`/tasks/${task.id}/complete`);
+
+      expect(res.body.assignee).toBe('Asha');
+    });
+  });
+
+  test('unassigning a task that has no assignee is fine', async () => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+
+    const res = await assign(task.id, { assignee: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.assignee).toBeNull();
+  });
+
+  // /assign is the only way to set an assignee, so its validation and the
+  // 409 rule can't be bypassed through POST or PUT.
+  test('POST /tasks ignores an assignee in the body', async () => {
+    const res = await createTask({ title: 'Review PR', assignee: 'Asha' });
+
+    expect(res.body.assignee).toBeNull();
+  });
+
+  test('PUT /tasks/:id cannot change the assignee', async () => {
+    const { body: task } = await createTask({ title: 'Review PR' });
+    await assign(task.id, { assignee: 'Asha' });
+
+    const res = await api().put(`/tasks/${task.id}`).send({ assignee: '' });
+
+    expect(res.body.assignee).toBe('Asha');
   });
 });
 
