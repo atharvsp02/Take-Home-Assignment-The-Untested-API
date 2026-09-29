@@ -288,9 +288,9 @@ describe('completeTask', () => {
     expect(taskService.completeTask('does-not-exist')).toBeNull();
   });
 
-  // BUG #3: completeTask() hard-codes priority: 'medium', silently
-  // downgrading (or upgrading) the task's priority.
-  test.failing('keeps the original priority', () => {
+  // Regression test for BUG #3 (fixed): completeTask() used to hard-code
+  // priority: 'medium', silently changing the task's priority.
+  test('keeps the original priority', () => {
     const task = taskService.create({ title: 'Urgent', priority: 'high' });
 
     expect(taskService.completeTask(task.id).priority).toBe('high');

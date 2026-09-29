@@ -34,7 +34,7 @@ rejected is accepted.
 |---|-----|----------|-------|--------|
 | 1 | Pagination skips the first page | High | `src/services/taskService.js:12` | ✅ Fixed |
 | 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | ✅ Fixed |
-| 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | Open |
+| 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | ✅ Fixed |
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | Open |
 | 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | Open |
 | 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | Open |
@@ -121,7 +121,7 @@ tasks.filter((t) => t.status === status);
 
 ## 3. Completing a task resets its priority to `medium`
 
-**Severity:** Medium · **Where:** `src/services/taskService.js:69`
+**Severity:** Medium · **Where:** `src/services/taskService.js:69` · **Status:** ✅ Fixed
 
 **Expected:** `PATCH /tasks/:id/complete` changes `status` to `done` and sets
 `completedAt`. Everything else about the task stays the same.
@@ -154,7 +154,7 @@ leftover from copy-pasting.
 - `taskService.test.js` › completeTask › *keeps the original priority*
 - `tasks.api.test.js` › PATCH /tasks/:id/complete › *keeps the task priority*
 
-**Fix:** Delete the `priority: 'medium'` line.
+**Fix (applied):** Delete the `priority: 'medium'` line.
 
 ---
 

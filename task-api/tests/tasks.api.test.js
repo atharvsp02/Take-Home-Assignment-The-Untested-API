@@ -374,8 +374,8 @@ describe('PATCH /tasks/:id/complete', () => {
     expect(res.body).toEqual({ error: 'Task not found' });
   });
 
-  // BUG #3: completeTask() hard-codes priority: 'medium'.
-  test.failing('keeps the task priority', async () => {
+  // Regression test for BUG #3 (fixed): completing used to reset priority to 'medium'.
+  test('keeps the task priority', async () => {
     const { body: task } = await createTask({ title: 'Urgent', priority: 'high' });
 
     const res = await api().patch(`/tasks/${task.id}/complete`);
