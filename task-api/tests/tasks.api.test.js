@@ -239,9 +239,11 @@ describe('POST /tasks', () => {
     expect(res.status).toBe(400);
   });
 
-  // BUG #4 (consequence): once a task with status null is stored,
-  // getByStatus() calls null.includes() and every filtered request is a 500.
-  test.failing('a task sent with status: null does not break GET /tasks?status=', async () => {
+  // Regression test for the BUG #4 crash: getByStatus() used to call
+  // null.includes() on such a task, so every filtered request was a 500.
+  // Stopped by the exact comparison from the #2 fix; the #4 validation fix
+  // also keeps null out of the store in the first place.
+  test('a task sent with status: null does not break GET /tasks?status=', async () => {
     silenceErrorLog();
     await createTask({ title: 'Bad', status: null });
 

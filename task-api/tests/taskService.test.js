@@ -137,9 +137,9 @@ describe('getByStatus', () => {
     expect(taskService.getByStatus('archived')).toEqual([]);
   });
 
-  // BUG #2: the filter uses String.includes(), so a partial value matches
-  // several statuses: "do" hits both "todo" and "done", "in" hits "in_progress".
-  test.failing('matches the status exactly, not as a substring', () => {
+  // Regression test for BUG #2 (fixed): the filter used String.includes(), so
+  // "do" matched both "todo" and "done" and "in" matched "in_progress".
+  test('matches the status exactly, not as a substring', () => {
     expect(taskService.getByStatus('do')).toEqual([]);
     expect(taskService.getByStatus('in')).toEqual([]);
   });

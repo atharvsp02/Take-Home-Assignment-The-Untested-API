@@ -33,7 +33,7 @@ rejected is accepted.
 | # | Bug | Severity | Where | Status |
 |---|-----|----------|-------|--------|
 | 1 | Pagination skips the first page | High | `src/services/taskService.js:12` | ✅ Fixed |
-| 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | Open |
+| 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | ✅ Fixed |
 | 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | Open |
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | Open |
 | 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | Open |
@@ -86,7 +86,7 @@ const offset = (page - 1) * limit;
 
 ## 2. Status filter matches partial words
 
-**Severity:** Medium · **Where:** `src/services/taskService.js:9`
+**Severity:** Medium · **Where:** `src/services/taskService.js:9` · **Status:** ✅ Fixed
 
 **Expected:** `?status=` only returns tasks whose status is exactly the value
 given. `?status=do` matches nothing, because `do` isn't a status.
@@ -111,7 +111,7 @@ status. It's a substring search, not a comparison.
 **How it was found:** `taskService.test.js` › getByStatus › *matches the
 status exactly, not as a substring*
 
-**Fix:**
+**Fix (applied):**
 
 ```js
 tasks.filter((t) => t.status === status);
