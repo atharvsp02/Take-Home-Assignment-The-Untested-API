@@ -544,5 +544,8 @@ immediately.
 | D2 | Sample request `?status=pending&page=1&limit=10` | `pending` is not a status, so the list is always empty; the pagination part is ignored (#6) | README "Sample requests" |
 | D3 | `PUT /tasks/:id` is a "Full update of a task" | PUT is a **partial** merge: fields you don't send are kept. That's closer to PATCH behaviour. | README "API Reference" |
 
-**Fix:** Update the README to match the code (D1, D2), and either describe PUT
-as a partial update or make it a real full replacement (D3).
+**Fix (applied):** The README now uses the real status values (D1), and its
+sample request uses `?status=todo` (D2), which also paginates now that #6 is
+fixed. For D3, PUT is documented as a partial update rather than changed into a
+full replacement. Changing the behaviour would break any client that sends only
+the fields it wants to change, so the docs were the safer side to fix.
