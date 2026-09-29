@@ -38,7 +38,7 @@ rejected is accepted.
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | ✅ Fixed |
 | 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | ✅ Fixed |
 | 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | ✅ Fixed |
-| 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | Open |
+| 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | ✅ Fixed |
 | 8 | Invalid `page`/`limit` values are silently accepted | Low | `src/routes/tasks.js:20-21` | Open |
 | 9 | `description` is never validated; loose date formats accepted | Low | `src/utils/validators.js:14, 30` | Open |
 | 10 | Setting `status: done` through PUT leaves `completedAt` empty | Medium | `src/services/taskService.js:46-53` | ✅ Fixed |
@@ -338,7 +338,7 @@ const getPaginated = (page, limit, status) => {
 
 ## 7. Malformed or oversized JSON returns 500 instead of 4xx
 
-**Severity:** Medium · **Where:** `src/app.js:9-12`
+**Severity:** Medium · **Where:** `src/app.js:9-12` · **Status:** ✅ Fixed
 
 **Expected:** A request with broken JSON gets `400 Bad Request`, and a body
 over the size limit gets `413 Payload Too Large`. Both are the client's
@@ -368,9 +368,12 @@ broken, retry later", when they actually need to fix their request. It also
 makes real server errors harder to find in the logs.
 
 **How it was found:** `tasks.api.test.js` › error handling › *returns 400
-for a malformed JSON body* (the 413 case was then confirmed manually).
+for a malformed JSON body*. The 413 case was then confirmed manually, and
+after the fix it has its own test (*returns 413 for a body over the size
+limit*). Another test checks that client errors are no longer logged as
+server errors, while real 500s still are.
 
-**Fix:** Respect the status the error carries, and only log real server errors:
+**Fix (applied):** Respect the status the error carries, and only log real server errors:
 
 ```js
 app.use((err, req, res, next) => {

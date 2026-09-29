@@ -466,10 +466,11 @@ describe('GET /tasks/stats', () => {
 });
 
 describe('error handling', () => {
-  // BUG #7: express.json() rejects bad JSON with a 400 error, but the app's
-  // error handler ignores err.status and always answers 500.
-  test.failing('returns 400 for a malformed JSON body', async () => {
-    silenceErrorLog();
+  // Regression tests for BUG #7 (fixed): express.json() flags bad JSON as a
+  // 400 (and an oversized body as a 413), but the error handler used to
+  // ignore err.status, answer 500 and log a stack trace for every one.
+  test('returns 400 for a malformed JSON body', async () => {
+    const errorLog = silenceErrorLog();
 
     const res = await api()
       .post('/tasks')
@@ -477,10 +478,24 @@ describe('error handling', () => {
       .send('{"title": "missing brace"');
 
     expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'Request body is not valid JSON' });
+    expect(errorLog).not.toHaveBeenCalled();
+  });
+
+  test('returns 413 for a body over the size limit', async () => {
+    silenceErrorLog();
+
+    const res = await api()
+      .post('/tasks')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ title: 'x'.repeat(200 * 1024) }));
+
+    expect(res.status).toBe(413);
+    expect(res.body).toEqual({ error: expect.any(String) });
   });
 
   test('unexpected errors return a generic 500 without leaking details', async () => {
-    silenceErrorLog();
+    const errorLog = silenceErrorLog();
     jest.spyOn(taskService, 'getAll').mockImplementation(() => {
       throw new Error('database exploded');
     });
@@ -489,5 +504,6 @@ describe('error handling', () => {
 
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'Internal server error' });
+    expect(errorLog).toHaveBeenCalled();
   });
 });
