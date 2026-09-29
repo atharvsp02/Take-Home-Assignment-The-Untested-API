@@ -4,6 +4,11 @@ Bugs found while writing the test suite for `task-api`. Every bug below is
 backed by at least one automated test and was also reproduced by hand against
 the running server with `curl`.
 
+**Result: 10 bugs found, 8 fixed, 2 left open on purpose.** All High and
+Medium bugs are fixed, one commit per bug, and each fix commit also turns that
+bug's tests into regular regression tests. The two open bugs are Low severity
+input-validation gaps; see [Why #8 and #9 are still open](#why-8-and-9-are-still-open).
+
 ## How the bugs are captured in the tests
 
 Tests for a known bug are written with Jest's `test.failing`. Each one
@@ -12,6 +17,9 @@ asserts the **correct** behaviour, so it fails while the bug exists, and
 still recording every bug in code. Once a bug is fixed, Jest reports its test
 as "passed but was supposed to fail", which is the signal to change it to a
 plain `test`.
+
+Today, the tests for the 8 fixed bugs are regular tests (so the bugs can't
+quietly come back), and only the tests for #8 and #9 still use `test.failing`.
 
 ```bash
 cd task-api
@@ -43,7 +51,18 @@ rejected is accepted.
 | 9 | `description` is never validated; loose date formats accepted | Low | `src/utils/validators.js:14, 30` | Open |
 | 10 | Setting `status: done` through PUT leaves `completedAt` empty | Medium | `src/services/taskService.js:46-53` | ✅ Fixed |
 
-Paths in the table are relative to `task-api/`.
+Paths in the table are relative to `task-api/`. Line numbers point to the
+**original** code (commit `2b32db7`), so they match what a reviewer sees in the
+untouched assignment repo; the fixes have shifted some lines since.
+
+### Why #8 and #9 are still open
+
+Both are Low severity: they let odd input through, but they don't crash
+anything, corrupt existing data, or return wrong results for normal requests.
+Fixing them also needs product decisions that the brief doesn't answer, such as
+the maximum page size (#8), or whether date-only values like `2026-10-01` count
+as valid ISO dates (#9). Each section below includes a proposed fix, and their
+`test.failing` tests are ready to switch on once those decisions are made.
 
 ---
 
