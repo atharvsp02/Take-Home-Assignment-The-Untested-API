@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Live API** | _(link added after deployment)_ |
+| **Live API** | https://take-home-assignment-the-untested-api-iopg.onrender.com |
 | **Repository** | https://github.com/atharvsp02/Take-Home-Assignment-The-Untested-API/tree/submission |
 | **Bug report** | [BUG_REPORT.md](./BUG_REPORT.md) |
 | **API docs** | [README.md](./README.md#api-reference) |
