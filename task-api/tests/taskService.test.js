@@ -148,9 +148,9 @@ describe('getByStatus', () => {
 describe('getPaginated', () => {
   // Pages are 1-based: the route defaults a missing ?page to 1.
 
-  // BUG #1: offset is computed as page * limit instead of (page - 1) * limit,
-  // so page 1 skips the first `limit` tasks and they can never be fetched.
-  test.failing('page 1 returns the first `limit` tasks', () => {
+  // Regression tests for BUG #1 (fixed): offset used to be page * limit, so
+  // page 1 skipped the first `limit` tasks and they could never be fetched.
+  test('page 1 returns the first `limit` tasks', () => {
     createMany(12);
 
     const titles = taskService.getPaginated(1, 10).map((t) => t.title);
@@ -158,7 +158,7 @@ describe('getPaginated', () => {
     expect(titles).toEqual(Array.from({ length: 10 }, (_, i) => `Task ${i + 1}`));
   });
 
-  test.failing('page 2 returns the remaining tasks', () => {
+  test('page 2 returns the remaining tasks', () => {
     createMany(12);
 
     expect(taskService.getPaginated(2, 10).map((t) => t.title)).toEqual(['Task 11', 'Task 12']);

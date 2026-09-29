@@ -97,8 +97,8 @@ describe('GET /tasks', () => {
   });
 
   describe('?page= and ?limit= pagination', () => {
-    // BUG #1: page 1 skips the first `limit` tasks (offset is page * limit).
-    test.failing('?page=1&limit=5 returns the first five tasks', async () => {
+    // Regression test for BUG #1 (fixed): page 1 used to skip the first `limit` tasks.
+    test('?page=1&limit=5 returns the first five tasks', async () => {
       await createMany(7);
 
       const res = await api().get('/tasks?page=1&limit=5');

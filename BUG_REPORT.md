@@ -32,7 +32,7 @@ rejected is accepted.
 
 | # | Bug | Severity | Where | Status |
 |---|-----|----------|-------|--------|
-| 1 | Pagination skips the first page | High | `src/services/taskService.js:12` | Open |
+| 1 | Pagination skips the first page | High | `src/services/taskService.js:12` | ✅ Fixed |
 | 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | Open |
 | 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | Open |
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | Open |
@@ -49,7 +49,7 @@ Paths in the table are relative to `task-api/`.
 
 ## 1. Pagination skips the first page
 
-**Severity:** High · **Where:** `src/services/taskService.js:12`
+**Severity:** High · **Where:** `src/services/taskService.js:12` · **Status:** ✅ Fixed
 
 **Expected:** `GET /tasks?page=1&limit=10` returns tasks 1–10.
 
@@ -76,7 +76,7 @@ instead of index 0.
 - `taskService.test.js` › getPaginated › *page 2 returns the remaining tasks*
 - `tasks.api.test.js` › pagination › *?page=1&limit=5 returns the first five tasks*
 
-**Fix:**
+**Fix (applied):**
 
 ```js
 const offset = (page - 1) * limit;
