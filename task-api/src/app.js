@@ -4,7 +4,35 @@ const taskRoutes = require('./routes/tasks');
 const app = express();
 
 app.use(express.json());
+
+// Landing route, so opening the deployed URL shows what the API offers.
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Task Manager API',
+    endpoints: [
+      'GET /tasks',
+      'GET /tasks?status=todo&page=1&limit=10',
+      'POST /tasks',
+      'PUT /tasks/:id',
+      'DELETE /tasks/:id',
+      'PATCH /tasks/:id/complete',
+      'PATCH /tasks/:id/assign',
+      'GET /tasks/stats',
+    ],
+  });
+});
+
+// Used by the hosting platform to check that the service is up.
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
 app.use('/tasks', taskRoutes);
+
+// Unknown routes get a JSON error like the rest of the API, not Express's HTML page.
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not found' });
+});
 
 app.use((err, req, res, next) => {
   // Errors from middleware such as express.json() carry their own status
