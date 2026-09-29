@@ -44,11 +44,20 @@ const create = ({ title, description = '', status = 'todo', priority = 'medium',
   return task;
 };
 
+// Fields a client may change. id, createdAt and completedAt are managed by the
+// server, and anything else isn't part of the task shape (#5).
+const EDITABLE_FIELDS = ['title', 'description', 'status', 'priority', 'dueDate'];
+
 const update = (id, fields) => {
   const index = tasks.findIndex((t) => t.id === id);
   if (index === -1) return null;
 
-  const updated = { ...tasks[index], ...fields };
+  const changes = {};
+  EDITABLE_FIELDS.forEach((key) => {
+    if (fields[key] !== undefined) changes[key] = fields[key];
+  });
+
+  const updated = { ...tasks[index], ...changes };
   tasks[index] = updated;
   return updated;
 };

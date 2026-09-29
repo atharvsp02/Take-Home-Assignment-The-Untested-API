@@ -234,15 +234,24 @@ describe('update', () => {
     expect(taskService.update('does-not-exist', { title: 'x' })).toBeNull();
   });
 
-  // BUG #5: the update spreads the request body straight onto the task, so a
-  // caller can overwrite server-managed fields like id and createdAt.
-  test.failing('does not let the caller overwrite id or createdAt', () => {
+  // Regression tests for BUG #5 (fixed): update() used to spread the request
+  // body straight onto the task, so a caller could overwrite server-managed
+  // fields like id and createdAt, or add fields outside the task shape.
+  test('does not let the caller overwrite id or createdAt', () => {
     const task = taskService.create({ title: 'Protected' });
 
     const updated = taskService.update(task.id, { id: 'hacked', createdAt: PAST });
 
     expect(updated.id).toBe(task.id);
     expect(updated.createdAt).toBe(task.createdAt);
+  });
+
+  test('ignores fields that are not part of the task shape', () => {
+    const task = taskService.create({ title: 'Plain' });
+
+    const updated = taskService.update(task.id, { isAdmin: true, completedAt: PAST });
+
+    expect(updated).toEqual(task);
   });
 
   // BUG #10: completeTask() sets completedAt, but moving a task to "done"

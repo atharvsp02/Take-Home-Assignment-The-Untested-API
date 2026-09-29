@@ -36,7 +36,7 @@ rejected is accepted.
 | 2 | Status filter matches partial words | Medium | `src/services/taskService.js:9` | ✅ Fixed |
 | 3 | Completing a task resets its priority to `medium` | Medium | `src/services/taskService.js:69` | ✅ Fixed |
 | 4 | `null` status/priority skips validation and crashes the status filter | High | `src/utils/validators.js:8-14, 24-30` | ✅ Fixed |
-| 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | Open |
+| 5 | PUT can overwrite `id`, `createdAt` and add any field | High | `src/services/taskService.js:50` | ✅ Fixed |
 | 6 | Status filter ignores `page` and `limit` | Medium | `src/routes/tasks.js:14-17` | Open |
 | 7 | Malformed or oversized JSON returns 500 instead of 4xx | Medium | `src/app.js:9-12` | Open |
 | 8 | Invalid `page`/`limit` values are silently accepted | Low | `src/routes/tasks.js:20-21` | Open |
@@ -224,7 +224,7 @@ because bad data should never reach the store.
 
 ## 5. PUT can overwrite `id`, `createdAt` and add any field
 
-**Severity:** High · **Where:** `src/services/taskService.js:50`
+**Severity:** High · **Where:** `src/services/taskService.js:50` · **Status:** ✅ Fixed
 
 **Expected:** `PUT /tasks/:id` changes only the editable fields (`title`,
 `description`, `status`, `priority`, `dueDate`). Server-managed fields
@@ -262,7 +262,7 @@ have this problem, because it destructures only the fields it wants.
 - `taskService.test.js` › update › *does not let the caller overwrite id or createdAt*
 - `tasks.api.test.js` › PUT /tasks/:id › *does not let the client change the task id*
 
-**Fix:** Copy only the editable fields, the same way `create()` does:
+**Fix (applied):** Copy only the editable fields, the same way `create()` does:
 
 ```js
 const EDITABLE_FIELDS = ['title', 'description', 'status', 'priority', 'dueDate'];

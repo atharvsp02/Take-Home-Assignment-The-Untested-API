@@ -332,14 +332,26 @@ describe('PUT /tasks/:id', () => {
     expect(res.body).toEqual({ error: expect.any(String) });
   });
 
-  // BUG #5: the body is spread straight onto the stored task, so a client
-  // can change the task's id (and createdAt, completedAt, or add any field).
-  test.failing('does not let the client change the task id', async () => {
+  // Regression tests for BUG #5 (fixed): the body used to be spread straight
+  // onto the stored task, so a client could change id, createdAt or
+  // completedAt, or add any field.
+  test('does not let the client change the task id', async () => {
     const { body: task } = await createTask({ title: 'Mine' });
 
     const res = await api().put(`/tasks/${task.id}`).send({ id: 'hacked' });
 
     expect(res.body.id).toBe(task.id);
+  });
+
+  test('ignores createdAt, completedAt and unknown fields', async () => {
+    const { body: task } = await createTask({ title: 'Mine' });
+
+    const res = await api()
+      .put(`/tasks/${task.id}`)
+      .send({ title: 'Renamed', createdAt: PAST, completedAt: PAST, isAdmin: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ ...task, title: 'Renamed' });
   });
 
   // Regression test for BUG #4 (fixed): validateUpdateTask had the same null loophole.
